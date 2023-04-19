@@ -23,7 +23,7 @@ locals {
 ################################################################################
 
 module "vpc" {
-  source = "ryano0oceros/epa-at-318-tf-aws-vpc"
+  source = "git::https://github.com/ryano0oceros/epa-at-318-tf-aws-vpc"
 
   name = local.name
   cidr = local.vpc_cidr
