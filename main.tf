@@ -64,5 +64,5 @@ resource "aws_instance" "vm-server" {
     Name = "epa-demo-server-vm"
   }
 
-  depends_on = [ vpc ]
+  depends_on = [ module.vpc ]
 }
