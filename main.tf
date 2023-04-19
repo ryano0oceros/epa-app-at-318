@@ -53,15 +53,6 @@ module "vpc" {
 # Sample Instance
 ################################################################################
 
-resource "aws_instance" "app_server" {
-  ami           = "ami-830c94e3"
-  instance_type = "t2.micro"
-
-  tags = {
-    Name = "ExampleAppServerInstance"
-  }
-}
-
 resource "aws_instance" "vm-server" {
   ami                    = data.aws_ami.ubuntu-linux-2004.id
   instance_type          = "t2.micro"
@@ -72,4 +63,6 @@ resource "aws_instance" "vm-server" {
   tags = {
     Name = "epa-demo-server-vm"
   }
+
+  depends_on = [ vpc ]
 }
