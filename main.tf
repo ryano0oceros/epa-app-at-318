@@ -60,7 +60,7 @@ resource "aws_instance" "vm-server" {
   source_dest_check      = false
   
   tags = {
-    Name = "epa-demo-server-vm"
+    Name = "epa-demo-server-vm2"
   }
 
   depends_on = [ module.vpc ]
