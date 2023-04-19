@@ -8,13 +8,21 @@ jobs:
   tf-plan-apply:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository code
-        uses: actions/checkout@v3
-      - name: get specific version of terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-            terraform_version: 1.1.7
-      - name: terraform plan 
-        run: terraform plan
-      - name: terraform apply 
-        run: terraform apply
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+        role-duration-seconds: 1200
+        role-session-name: MySessionName
+    - name: Check out repository code
+      uses: actions/checkout@v3
+    - name: get specific version of terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+          terraform_version: 1.1.7
+    - name: terraform plan 
+      run: terraform plan
+    - name: terraform apply 
+      run: terraform apply
