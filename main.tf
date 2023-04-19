@@ -64,7 +64,7 @@ resource "aws_instance" "app_server" {
 
 resource "aws_instance" "vm-server" {
   ami                    = data.aws_ami.ubuntu-linux-2004.id
-  instance_type          = "t2.micro""
+  instance_type          = "t2.micro"
   subnet_id              = module.vpc.aws_subnet.private[0].id
   vpc_security_group_ids = [module.vpc.aws_default_security_group.this[0].id]
   source_dest_check      = false
