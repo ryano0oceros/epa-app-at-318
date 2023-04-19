@@ -4,6 +4,21 @@ provider "aws" {
 
 data "aws_availability_zones" "available" {}
 
+data "aws_ami" "ubuntu-linux-2004" {
+  most_recent = true
+  owners      = ["099720109477"] # Canonical
+  
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-*"]
+  }
+  
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
 locals {
   name   = "ex-${basename(path.cwd)}"
   region = "us-east-1"
@@ -32,4 +47,29 @@ module "vpc" {
   private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
 
   tags = local.tags
+}
+
+################################################################################
+# Sample Instance
+################################################################################
+
+resource "aws_instance" "app_server" {
+  ami           = "ami-830c94e3"
+  instance_type = "t2.micro"
+
+  tags = {
+    Name = "ExampleAppServerInstance"
+  }
+}
+
+resource "aws_instance" "vm-server" {
+  ami                    = data.aws_ami.ubuntu-linux-2004.id
+  instance_type          = "t2.micro""
+  subnet_id              = module.vpc.aws_subnet.private[0].id
+  vpc_security_group_ids = [module.vpc.aws_default_security_group.this[0].id]
+  source_dest_check      = false
+  
+  tags = {
+    Name = "epa-demo-server-vm"
+  }
 }
