@@ -38,7 +38,7 @@ locals {
 ################################################################################
 
 module "vpc" {
-  source = "git::https://github.com/ryano0oceros/ryano0oceros-at-318-tf-aws-vpc"
+  source = "git::https://github.com/ryano0oceros/ryano0oceros-at-318-tf-aws-vpc/commit/e1f10330cf8eb281e71976aae491036d4a3b6da7"
 
   name = local.name
   cidr = local.vpc_cidr
