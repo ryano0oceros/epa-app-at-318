@@ -5,9 +5,41 @@ on:
     branches:
       - main
 jobs:
+ tflint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      name: Checkout source code
+
+    - uses: actions/cache@v3
+      name: Cache plugin dir
+      with:
+        path: ~/.tflint.d/plugins
+        key: ${{ matrix.os }}-tflint-${{ hashFiles('.tflint.hcl') }}
+
+    - uses: terraform-linters/setup-tflint@v3
+      name: Setup TFLint
+      with:
+        tflint_version: v0.44.1
+
+    - name: Show version
+      run: tflint --version
+
+    - name: Init TFLint
+      run: tflint --init
+      env:
+        # https://github.com/terraform-linters/tflint/blob/master/docs/user-guide/plugins.md#avoiding-rate-limiting
+        GITHUB_TOKEN: ${{ github.token }}
+
+    - name: Run TFLint
+      run: tflint -f compact
+
   tf-plan-apply:
     runs-on: ubuntu-latest
+
     steps:
+
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
@@ -16,15 +48,20 @@ jobs:
         aws-region: us-east-1
         role-duration-seconds: 1200
         role-session-name: MySessionName
+
     - name: Check out repository code
       uses: actions/checkout@v3
+
     - name: get specific version of terraform
       uses: hashicorp/setup-terraform@v2
       with:
           terraform_version: 1.1.7
+
     - name: terraform init 
       run: terraform init
+
     - name: terraform plan 
       run: terraform plan
-    - name: terraform destroy 
-      run: terraform destroy -auto-approve
+
+    - name: terraform apply 
+      run: terraform apply -auto-approve
