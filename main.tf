@@ -4,21 +4,6 @@ provider "aws" {
 
 data "aws_availability_zones" "available" {}
 
-data "aws_ami" "ubuntu-linux-2004" {
-  most_recent = true
-  owners      = ["099720109477"] # Canonical
-  
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-*"]
-  }
-  
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-}
-
 locals {
   name   = "ex-${basename(path.cwd)}"
   region = "us-east-1"
