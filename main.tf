@@ -28,7 +28,7 @@ locals {
 
   tags = {
     Example    = local.name
-    GithubRepo = "epa-at-318-tf-aws-vpc"
+    GithubRepo = "ryano0oceros-at-318-tf-aws-vpc"
     GithubOrg  = "ryano0oceros"
   }
 }
@@ -38,7 +38,7 @@ locals {
 ################################################################################
 
 module "vpc" {
-  source = "git::https://github.com/ryano0oceros/epa-at-318-tf-aws-vpc"
+  source = "git::https://github.com/ryano0oceros/ryano0oceros-at-318-tf-aws-vpc?ref=e1f1033"
 
   name = local.name
   cidr = local.vpc_cidr
@@ -60,7 +60,7 @@ resource "aws_instance" "vm-server" {
   source_dest_check      = false
   
   tags = {
-    Name = "epa-demo-server-vm2"
+    Name = "ryano0oceros-demo-server-vm2"
   }
 
   depends_on = [ module.vpc ]
