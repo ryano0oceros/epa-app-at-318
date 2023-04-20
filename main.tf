@@ -48,20 +48,3 @@ module "vpc" {
 
   tags = local.tags
 }
-
-################################################################################
-# Sample Instance
-################################################################################
-
-resource "aws_instance" "vm-server" {
-  ami                    = data.aws_ami.ubuntu-linux-2004.id
-  instance_type          = "t2.micro"
-  subnet_id              = module.vpc.private_subnets[0]
-  source_dest_check      = false
-  
-  tags = {
-    Name = "epa-demo-server-vm2"
-  }
-
-  depends_on = [ module.vpc ]
-}
