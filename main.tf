@@ -13,7 +13,7 @@ locals {
 
   tags = {
     Example    = local.name
-    GithubRepo = "epa-at-318-tf-aws-vpc"
+    GithubRepo = "ryano0oceros-at-318-tf-aws-vpc"
     GithubOrg  = "ryano0oceros"
   }
 }
