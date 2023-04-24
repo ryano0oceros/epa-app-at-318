@@ -3,6 +3,7 @@ name: "Terraform"
 on:
   push:
     branches: [ main ]
+  pull_request:
 jobs:
   tflint:
     runs-on: ubuntu-latest
