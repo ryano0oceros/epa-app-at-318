@@ -4,6 +4,21 @@ provider "aws" {
 
 data "aws_availability_zones" "available" {}
 
+data "aws_ami" "ubuntu-linux-2004" {
+  most_recent = true
+  owners      = ["099720109477"] # Canonical
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
 locals {
   name   = "ex-${basename(path.cwd)}"
   region = "us-east-1"
@@ -32,4 +47,21 @@ module "vpc" {
   private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
 
   tags = local.tags
+}
+
+################################################################################
+# Sample Instance
+################################################################################
+
+resource "aws_instance" "vm-server" {
+  ami                    = data.aws_ami.ubuntu-linux-2004.id
+  instance_type          = "t2.micro"
+  subnet_id              = module.vpc.private_subnets[0]
+  source_dest_check      = false
+
+  tags = {
+    Name = "ryano0oceros-demo-server-vm2"
+  }
+
+  depends_on = [ module.vpc ]
 }
