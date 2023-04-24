@@ -64,3 +64,4 @@ resource "aws_instance" "vm-server" {
   }
 
   depends_on = [ module.vpc ]
+}
