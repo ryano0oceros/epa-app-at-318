@@ -1,44 +1,94 @@
-name: "branch deploy demo"
+name: branch-deploy
 
-# The workflow to execute on is comments that are newly created
 on:
   issue_comment:
-    types: [created]
+    types: [ created ]
+
+# The working directory where our Terraform files are located
+env:
+  WORKING_DIR: terraform/
 
 # Permissions needed for reacting and adding comments for IssueOps commands
 permissions:
   pull-requests: write
   deployments: write
-  contents: write
+  contents: write 
   checks: read
 
 jobs:
-  demo:
-    if: ${{ github.event.issue.pull_request }} # only run on pull request comments
+  deploy:
+    name: deploy
     runs-on: ubuntu-latest
+    if: ${{ github.event.issue.pull_request }} # only run on pull request comments
+    environment: production-secrets # the locked down environment we pull secrets from
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }} # the directory we use where all our TF files are stored
+
     steps:
-      # Execute IssueOps branch deployment logic, hooray!
-      # This will be used to "gate" all future steps below and conditionally trigger steps/deployments
-      - uses: github/branch-deploy@v6.0.1
+
+        # The branch-deploy Action
+      - name: branch-deploy
         id: branch-deploy
-        with:
-          trigger: ".deploy"
+        uses: github/branch-deploy@vX.X.X
 
-      # Run your deployment logic for your project here - examples seen below
-
-      # Checkout your projects repository based on the ref provided by the branch-deploy step
-      - uses: actions/checkout@v3
+        # If the branch-deploy Action was triggered, checkout our branch
+      - name: Checkout
+        if: steps.branch-deploy.outputs.continue == 'true'
+        uses: actions/checkout@v3
         with:
           ref: ${{ steps.branch-deploy.outputs.ref }}
 
-      # Do some fake "noop" deployment logic here
-      # conditionally run a noop deployment
-      - name: fake noop deploy
-        if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop == 'true' }}
-        run: echo "I am doing a fake noop deploy"
+        # Setup Terraform on our Actions runner
+      - uses: hashicorp/setup-terraform@ed3a0531877aca392eb870f440d9ae7aba83a6bd # pin@v1
+        if: steps.branch-deploy.outputs.continue == 'true'
+        with:
+          terraform_version: 1.1.7 # use the version of Terraform your project uses here
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-      # Do some fake "regular" deployment logic here
-      # conditionally run a regular deployment
-      - name: fake regular deploy
+        # Run Terraform init in our working directory
+      - name: Terraform init
+        if: steps.branch-deploy.outputs.continue == 'true'
+        run: terraform init
+
+        # If '.deploy noop' was used, run a Terraform plan
+      - name: Terraform plan
+        if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop == 'true' }}
+        id: plan
+        run: terraform plan -no-color
+        continue-on-error: true # continue on error as we will handle errors later on
+
+        # If '.deploy' was used, run a Terraform apply
+      - name: Terraform apply
         if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop != 'true' }}
-        run: echo "I am doing a fake regular deploy"
+        id: apply
+        run: terraform apply -no-color -auto-approve
+        continue-on-error: true # continue on error as we will handle errors later on
+
+        # This step writes the TF plan/apply output to $GITHUB_ENV which the branch-deploy Action will read from and post as a comment on the pull request
+      - name: Terraform plan output
+        if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop == 'true' }}
+        env:
+          TF_STDOUT: ${{ steps.plan.outputs.stdout }}
+        run: |
+          TF_OUTPUT="\`\`\`terraform\n${TF_STDOUT}\n\`\`\`"
+          echo 'DEPLOY_MESSAGE<<EOF' >> $GITHUB_ENV
+          echo "$TF_OUTPUT" >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
+      - name: Terraform apply output
+        if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop != 'true' }}
+        env:
+          TF_STDOUT: ${{ steps.apply.outputs.stdout }}
+        run: |
+          TF_OUTPUT="\`\`\`terraform\n${TF_STDOUT}\n\`\`\`"
+          echo 'DEPLOY_MESSAGE<<EOF' >> $GITHUB_ENV
+          echo "$TF_OUTPUT" >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
+
+        # Here we handle any errors that might have occurred during the Terraform plan/apply and exit accordingly
+      - name: Check Terraform plan output
+        if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop == 'true' && steps.plan.outcome == 'failure' }}
+        run: exit 1
+      - name: Check Terraform apply output
+        if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop != 'true' && steps.apply.outcome == 'failure' }}
+        run: exit 1
