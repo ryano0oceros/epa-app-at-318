@@ -44,7 +44,9 @@ jobs:
         if: steps.branch-deploy.outputs.continue == 'true'
         with:
           terraform_version: 1.1.7 # use the version of Terraform your project uses here
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
 
         # Run Terraform init in our working directory
       - name: Terraform init
