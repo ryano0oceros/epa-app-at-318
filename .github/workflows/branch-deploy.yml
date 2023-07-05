@@ -49,7 +49,7 @@ jobs:
         # Run Terraform init in our working directory
       - name: Terraform init
         if: steps.branch-deploy.outputs.continue == 'true'
-        run: terraform init
+        run: terraform init -backend-config=PATH
 
         # If '.deploy noop' was used, run a Terraform plan
       - name: Terraform plan
